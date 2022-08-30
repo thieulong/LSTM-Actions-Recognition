@@ -9,7 +9,7 @@ pose = mpPose.Pose()
 mpDraw = mp.solutions.drawing_utils
 
 lm_list = []
-label = "punch"
+label = "neutral"
 no_of_frames = 600
 i=0
 

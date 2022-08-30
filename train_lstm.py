@@ -11,7 +11,7 @@ neutral_df = pd.read_csv("neutral.txt")
 
 X = []
 y = []
-no_of_timesteps = 20q
+no_of_timesteps = 20
 
 datasets = punch_df.iloc[:,1:].values
 n_samples = len(datasets)

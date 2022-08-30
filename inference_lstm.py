@@ -39,7 +39,10 @@ def draw_class_on_image(label, img):
     font = cv2.FONT_HERSHEY_SIMPLEX
     bottomLeftCornerOfText = (10,30)
     fontScale = 1
-    fontColor = (0,255,0)
+    if label == "punch":
+        fontColor = (0,0,255)
+    else:
+        fontColor = (0,255,0)
     thickness = 2
     lineType = 2
     cv2.putText(img, str(label),
@@ -79,6 +82,25 @@ while True:
                 t1 = threading.Thread(target=detect, args=(model, lm_list, ))
                 t1.start()
                 lm_list = []
+            x_coordinate = list()
+            y_coordinate = list()
+            for id, lm in enumerate(results.pose_landmarks.landmark):
+                h, w, c = frame.shape
+                cx, cy = int(lm.x * w), int(lm.y * h)
+                x_coordinate.append(cx)
+                y_coordinate.append(cy)
+            if label == "neutral":
+                cv2.rectangle(img=frame,
+                                pt1=(min(x_coordinate), max(y_coordinate)),
+                                pt2=(max(x_coordinate), min(y_coordinate)-25),
+                                color=(0,255,0),
+                                thickness=1)
+            elif label == "punch":
+                cv2.rectangle(img=frame,
+                                pt1=(min(x_coordinate), max(y_coordinate)),
+                                pt2=(max(x_coordinate), min(y_coordinate)-25),
+                                color=(0,0,255),
+                                thickness=3)
 
             frame = draw_landmark_on_image(mpDraw, results, frame)
         frame = draw_class_on_image(label, frame)
