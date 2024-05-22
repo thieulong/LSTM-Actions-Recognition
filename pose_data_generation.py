@@ -10,7 +10,7 @@ mpDraw = mp.solutions.drawing_utils
 
 lm_list = []
 label = "neutral"
-no_of_frames = 600
+no_of_frames = 1000
 i=0
 
 def make_landmark_timestep(results):
