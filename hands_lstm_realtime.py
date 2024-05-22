@@ -39,6 +39,7 @@ with h5py.File("lstm-hand-gripping.h5", 'r') as f:
 
 lm_list = []
 label = "not grasped"
+neutral_label = "not grasped"
 
 def make_landmark_timestep(results):
     c_lm = []
@@ -69,8 +70,8 @@ def draw_bounding_box_and_label(frame, results, label):
         y_min = int(y_min * h)
         x_max = int(x_max * w)
         y_max = int(y_max * h)
-        color = (0, 0, 255) if label != "not grasped" else (0, 255, 0)
-        thickness = 2 if label != "not grasped" else 1
+        color = (0, 0, 255) if label != neutral_label else (0, 255, 0)
+        thickness = 2 if label != neutral_label else 1
         cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), color, thickness)
         cv2.putText(frame, f"Status: {label}", (x_min, y_max + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 1)
     return frame

@@ -13,28 +13,22 @@ mpPose = mp.solutions.pose
 pose = mpPose.Pose()
 mpDraw = mp.solutions.drawing_utils
 
-# Custom object mapping for the model loading process
 custom_objects = {
     'Orthogonal': tf.keras.initializers.Orthogonal
 }
 
-# Load the model configuration and weights
 with h5py.File("lstm-model.h5", 'r') as f:
     model_config = f.attrs.get('model_config')
-    model_config = json.loads(model_config)  # Ensure the config is correctly loaded as JSON
+    model_config = json.loads(model_config)  
 
-    # Remove unsupported arguments
     for layer in model_config['config']['layers']:
         if 'time_major' in layer['config']:
             del layer['config']['time_major']
 
-    # Convert the model configuration dictionary back to a JSON string
     model_json = json.dumps(model_config)
 
-    # Recreate the model
     model = tf.keras.models.model_from_json(model_json, custom_objects=custom_objects)
 
-    # Manually load the model weights
     weights_group = f['model_weights']
     for layer in model.layers:
         layer_name = layer.name
@@ -45,6 +39,7 @@ with h5py.File("lstm-model.h5", 'r') as f:
 
 lm_list = []
 label = "neutral"
+neutral_label = "neutral"
 
 def make_landmark_timestep(results):
     c_lm = []
@@ -67,7 +62,7 @@ def draw_class_on_image(label, img):
     font = cv2.FONT_HERSHEY_SIMPLEX
     bottomLeftCornerOfText = (10, 30)
     fontScale = 1
-    fontColor = (0, 0, 255) if label == "violent" else (0, 255, 0)
+    fontColor = (0, 255, 0) if label == neutral_label else (0, 0, 255)
     thickness = 2
     lineType = 2
     cv2.putText(img, str(label),
@@ -84,7 +79,10 @@ def detect(model, lm_list):
     lm_list = np.array(lm_list)
     lm_list = np.expand_dims(lm_list, axis=0)
     result = model.predict(lm_list)
-    label = "violent" if result[0][0] > 0.5 else "neutral"
+    if result[0][0] > 0.5:
+        label = "violent" 
+    else:
+        label = "neutral"
     return str(label)
 
 i = 0
@@ -110,18 +108,11 @@ while True:
                 cx, cy = int(lm.x * w), int(lm.y * h)
                 x_coordinate.append(cx)
                 y_coordinate.append(cy)
-            if label == "neutral":
-                cv2.rectangle(frame,
-                              (min(x_coordinate), max(y_coordinate)),
-                              (max(x_coordinate), min(y_coordinate) - 25),
-                              (0, 255, 0),
-                              1)
-            elif label == "punch":
-                cv2.rectangle(frame,
-                              (min(x_coordinate), max(y_coordinate)),
-                              (max(x_coordinate), min(y_coordinate) - 25),
-                              (0, 0, 255),
-                              3)
+            cv2.rectangle(frame,
+                            (min(x_coordinate), max(y_coordinate)),
+                            (max(x_coordinate), min(y_coordinate) - 25),
+                            (0, 255, 0),
+                            1)
 
             frame = draw_landmark_on_image(mpDraw, results, frame)
         frame = draw_class_on_image(label, frame)
