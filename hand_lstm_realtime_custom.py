@@ -90,10 +90,17 @@ def detect(model, lm_list):
         label = "cupping"
     return str(label)
 
-# Create a named window
+def adjust_brightness(frame, brightness_factor):
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    hsv = np.array(hsv, dtype = np.float64)
+    hsv[:,:,2] = hsv[:,:,2]*brightness_factor
+    hsv[:,:,2][hsv[:,:,2]>255]  = 255
+    hsv = np.array(hsv, dtype = np.uint8)
+    frame = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    return frame
+
 cv2.namedWindow("image", cv2.WINDOW_NORMAL)
-# Resize the window to a larger size
-cv2.resizeWindow("image", 1200, 1000)  # You can adjust the width and height as needed
+cv2.resizeWindow("image", 1200, 1000)
 
 i = 0
 warm_up_frames = 60
@@ -102,25 +109,22 @@ while True:
     ret, frame = cap.read()
     if not ret:
         break
-    
-    # Get the dimensions of the frame
-    h, w, c = frame.shape
 
-    # Define the cropping dimensions (e.g., cropping the center 50% of the frame)
-    crop_size = 0.5
+    frame = adjust_brightness(frame, 0.6)  
+
+    h, w, c = frame.shape
+    crop_size = 0.8
     x_center = w // 2
     y_center = h // 2
     crop_w = int(w * crop_size)
     crop_h = int(h * crop_size)
 
-    # Crop the frame
     x1 = x_center - crop_w // 2
     x2 = x_center + crop_w // 2
     y1 = y_center - crop_h // 2
     y2 = y_center + crop_h // 2
     cropped_frame = frame[y1:y2, x1:x2]
 
-    # Resize the cropped frame to the original frame size (optional)
     frame_resized = cv2.resize(cropped_frame, (w, h))
 
     frameRGB = cv2.cvtColor(frame_resized, cv2.COLOR_BGR2RGB)
