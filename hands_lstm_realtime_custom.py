@@ -99,11 +99,6 @@ def adjust_brightness(frame, brightness_factor):
     frame = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
     return frame
 
-def adjust_contrast(frame, contrast_factor):
-    gray = np.mean(frame, axis=(0, 1)).astype(np.uint8)
-    blended = cv2.addWeighted(frame, contrast_factor, gray, 1 - contrast_factor, 0)
-    return blended
-
 def undistort(frame, camera_matrix, dist_coeffs, dim):
     h, w = frame.shape[:2]
     K = camera_matrix
@@ -112,12 +107,11 @@ def undistort(frame, camera_matrix, dist_coeffs, dim):
     undistorted_frame = cv2.remap(frame, map1, map2, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
     return undistorted_frame
 
-# Generic values for a fisheye lens with 135-degree FOV
 camera_matrix = np.array([[300.0, 0.0, 320.0],
                           [0.0, 300.0, 240.0],
                           [0.0, 0.0, 1.0]])
 dist_coeffs = np.array([-0.3, 0.1, 0.0, 0.0])
-dim = (640, 480)  # Update this with your camera resolution
+dim = (640, 480) 
 
 cv2.namedWindow("image", cv2.WINDOW_NORMAL)
 cv2.resizeWindow("image", 1200, 1000)
@@ -127,11 +121,13 @@ warm_up_frames = 60
 
 while True:
     ret, frame = cap.read()
+
+    cv2.normalize(frame, frame, 0, 255, cv2.NORM_MINMAX)
+
     if not ret:
         break
 
     frame = undistort(frame, camera_matrix, dist_coeffs, dim)
-    frame = adjust_contrast(frame, 0.6)  # Decrease contrast
 
     h, w, c = frame.shape
     crop_size = 0.8
