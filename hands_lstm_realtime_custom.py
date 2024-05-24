@@ -7,10 +7,8 @@ import threading
 import h5py
 import json
 
-cap = cv2.VideoCapture(8)
-# cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 3)
-# cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
-cap.set(cv2.CAP_PROP_EXPOSURE, -10)
+cap = cv2.VideoCapture(4)
+cap.set(cv2.CAP_PROP_BRIGHTNESS, 0)
 
 mpHands = mp.solutions.hands
 hands = mpHands.Hands(max_num_hands=1)
@@ -20,9 +18,9 @@ custom_objects = {
     'Orthogonal': tf.keras.initializers.Orthogonal
 }
 
-with h5py.File("lstm-hand-gripping.h5", 'r') as f:
+with h5py.File("lstm-hand-grasping.h5", 'r') as f:
     model_config = f.attrs.get('model_config')
-    model_config = json.loads(model_config)
+    model_config = json.loads(model_config)  
 
     for layer in model_config['config']['layers']:
         if 'time_major' in layer['config']:
@@ -41,7 +39,8 @@ with h5py.File("lstm-hand-gripping.h5", 'r') as f:
             layer.set_weights(layer_weights)
 
 lm_list = []
-label = "neutral"
+label = "not grasped"
+neutral_label = "not grasped"
 
 def make_landmark_timestep(results):
     c_lm = []
@@ -72,9 +71,10 @@ def draw_bounding_box_and_label(frame, results, label):
         y_min = int(y_min * h)
         x_max = int(x_max * w)
         y_max = int(y_max * h)
-        color = (0, 0, 255) if label != "neutral" else (0, 255, 0)
-        cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), color, 1)
-        cv2.putText(frame, f"Action: {label}", (x_min, y_max + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 1)
+        color = (0, 0, 255) if label != neutral_label else (0, 255, 0)
+        thickness = 2 if label != neutral_label else 1
+        cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), color, thickness)
+        cv2.putText(frame, f"Status: {label}", (x_min, y_max + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 1)
     return frame
 
 def detect(model, lm_list):
@@ -82,56 +82,32 @@ def detect(model, lm_list):
     lm_list = np.array(lm_list)
     lm_list = np.expand_dims(lm_list, axis=0)
     result = model.predict(lm_list)
-    print(f"Model prediction result: {result}")
+    percentage_result = result * 100
+    print(f"Model prediction result: {percentage_result}")
     if result[0][0] > 0.5:
         label = "neutral"
     elif result[0][1] > 0.5:
-        label = "grasping"
+        label = "resting"
     elif result[0][2] > 0.5:
         label = "carrying"
     elif result[0][3] > 0.5:
         label = "cupping"
+    if label in ["neutral", "resting"]:
+        label = "not grasped"
+    if label in ["carrying", "cupping"]:
+        label = "grasped"
     return str(label)
 
-def adjust_brightness(frame, brightness_factor):
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    hsv = np.array(hsv, dtype = np.float64)
-    hsv[:,:,2] = hsv[:,:,2]*brightness_factor
-    hsv[:,:,2][hsv[:,:,2]>255]  = 255
-    hsv = np.array(hsv, dtype = np.uint8)
-    frame = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-    return frame
-
-def undistort(frame, camera_matrix, dist_coeffs, dim):
-    h, w = frame.shape[:2]
-    K = camera_matrix
-    D = dist_coeffs
-    map1, map2 = cv2.fisheye.initUndistortRectifyMap(K, D, np.eye(3), K, dim, cv2.CV_16SC2)
-    undistorted_frame = cv2.remap(frame, map1, map2, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
-    return undistorted_frame
-
-camera_matrix = np.array([[300.0, 0.0, 320.0],
-                          [0.0, 300.0, 240.0],
-                          [0.0, 0.0, 1.0]])
-dist_coeffs = np.array([-0.3, 0.1, 0.0, 0.0])
-dim = (640, 480) 
 
 cv2.namedWindow("image", cv2.WINDOW_NORMAL)
-cv2.resizeWindow("image", 1200, 1000)
+cv2.resizeWindow("image", 1200, 1000)  
 
 i = 0
 warm_up_frames = 60
 
 while True:
     ret, frame = cap.read()
-    # cv2.normalize(frame, frame, 0, 255, cv2.NORM_MINMAX)
-
-    if not ret:
-        break
-
-    frame = undistort(frame, camera_matrix, dist_coeffs, dim)
-    # frame = adjust_brightness(frame, 0.5)
-
+    frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
     h, w, c = frame.shape
     crop_size = 0.8
     x_center = w // 2
@@ -146,7 +122,6 @@ while True:
     cropped_frame = frame[y1:y2, x1:x2]
 
     frame_resized = cv2.resize(cropped_frame, (w, h))
-
     frameRGB = cv2.cvtColor(frame_resized, cv2.COLOR_BGR2RGB)
     results = hands.process(frameRGB)
     i += 1
@@ -158,8 +133,8 @@ while True:
                 t1 = threading.Thread(target=detect, args=(model, lm_list))
                 t1.start()
                 lm_list = []
-            frame_resized = draw_landmark_on_image(mpDraw, results, frame_resized)
-            frame_resized = draw_bounding_box_and_label(frame_resized, results, label)
+            frame = draw_landmark_on_image(mpDraw, results, frame_resized)
+            frame = draw_bounding_box_and_label(frame_resized, results, label)
         cv2.imshow("image", frame_resized)
         if cv2.waitKey(1) == ord('q'):
             break

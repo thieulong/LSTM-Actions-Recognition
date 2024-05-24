@@ -2,14 +2,14 @@ import cv2
 import mediapipe as mp
 import pandas as pd
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(4)
 
 mpHands = mp.solutions.hands
 hands = mpHands.Hands(max_num_hands=1)  # Ensure only one hand is detected
 mpDraw = mp.solutions.drawing_utils
 
 lm_list = []
-label = "cupping"
+label = "h"
 no_of_frames = 1000
 
 def make_landmark_timestep(results):
@@ -34,6 +34,7 @@ def draw_landmark_on_image(mpDraw, results, frame):
 
 while len(lm_list) <= no_of_frames:
     ret, frame = cap.read()
+    frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
     if ret:
         frameRGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = hands.process(frameRGB)

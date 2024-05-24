@@ -7,7 +7,7 @@ import threading
 import h5py
 import json
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(6)
 
 mpPose = mp.solutions.pose
 pose = mpPose.Pose()

@@ -6,9 +6,9 @@ from keras.models import Sequential
 from sklearn.model_selection import train_test_split
 
 neutral_df = pd.read_csv("neutral.txt")
-grasping_df = pd.read_csv("grasping.txt")
-carrying_df = pd.read_csv("carrying.txt")
-cupping_df = pd.read_csv("cupping.txt")
+resting_df = pd.read_csv("resting.txt")
+holding_df = pd.read_csv("holding.txt")
+gripping_df = pd.read_csv("gripping.txt")
 
 X = []
 y = []
@@ -20,19 +20,19 @@ for i in range(no_of_timesteps, n_samples):
     X.append(datasets[i-no_of_timesteps:i, :])
     y.append(0)
 
-datasets = grasping_df.iloc[:, 1:].values
+datasets = resting_df.iloc[:, 1:].values
 n_samples = len(datasets)
 for i in range(no_of_timesteps, n_samples):
     X.append(datasets[i-no_of_timesteps:i, :])
-    y.append(1)  
+    y.append(1)
 
-datasets = carrying_df.iloc[:, 1:].values
+datasets = holding_df.iloc[:, 1:].values
 n_samples = len(datasets)
 for i in range(no_of_timesteps, n_samples):
     X.append(datasets[i-no_of_timesteps:i, :])
     y.append(2) 
 
-datasets = cupping_df.iloc[:, 1:].values
+datasets = gripping_df.iloc[:, 1:].values
 n_samples = len(datasets)
 for i in range(no_of_timesteps, n_samples):
     X.append(datasets[i-no_of_timesteps:i, :])
@@ -58,4 +58,4 @@ model.compile(optimizer="adam", metrics=["accuracy"], loss="sparse_categorical_c
 
 model.fit(X_train, y_train, epochs=100, batch_size=32, validation_data=(X_test, y_test))
 
-model.save("lstm-hand-gripping.h5")
+model.save("lstm-hand-grasping.h5")
