@@ -99,6 +99,11 @@ def adjust_brightness(frame, brightness_factor):
     frame = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
     return frame
 
+def adjust_contrast(frame, contrast_factor):
+    gray = np.mean(frame, axis=(0, 1)).astype(np.uint8)
+    blended = cv2.addWeighted(frame, contrast_factor, gray, 1 - contrast_factor, 0)
+    return blended
+
 def undistort(frame, camera_matrix, dist_coeffs, dim):
     h, w = frame.shape[:2]
     K = camera_matrix
@@ -126,7 +131,7 @@ while True:
         break
 
     frame = undistort(frame, camera_matrix, dist_coeffs, dim)
-    # frame = adjust_brightness(frame, 0.5)
+    frame = adjust_contrast(frame, 0.6)  # Decrease contrast
 
     h, w, c = frame.shape
     crop_size = 0.8
