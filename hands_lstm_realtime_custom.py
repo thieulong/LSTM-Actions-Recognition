@@ -7,7 +7,7 @@ import threading
 import h5py
 import json
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(8)
 
 mpHands = mp.solutions.hands
 hands = mpHands.Hands(max_num_hands=1)
@@ -126,7 +126,7 @@ while True:
         break
 
     frame = undistort(frame, camera_matrix, dist_coeffs, dim)
-    frame = adjust_brightness(frame, 0.6)
+    # frame = adjust_brightness(frame, 0.5)
 
     h, w, c = frame.shape
     crop_size = 0.8

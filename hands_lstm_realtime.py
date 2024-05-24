@@ -7,7 +7,7 @@ import threading
 import h5py
 import json
 
-cap = cv2.VideoCapture(8)
+cap = cv2.VideoCapture(0)
 
 mpHands = mp.solutions.hands
 hands = mpHands.Hands(max_num_hands=1)
