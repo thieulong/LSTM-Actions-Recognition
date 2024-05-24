@@ -8,6 +8,9 @@ import h5py
 import json
 
 cap = cv2.VideoCapture(8)
+# cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 3)
+# cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
+cap.set(cv2.CAP_PROP_EXPOSURE, -10)
 
 mpHands = mp.solutions.hands
 hands = mpHands.Hands(max_num_hands=1)
@@ -121,13 +124,13 @@ warm_up_frames = 60
 
 while True:
     ret, frame = cap.read()
-
-    cv2.normalize(frame, frame, 0, 255, cv2.NORM_MINMAX)
+    # cv2.normalize(frame, frame, 0, 255, cv2.NORM_MINMAX)
 
     if not ret:
         break
 
     frame = undistort(frame, camera_matrix, dist_coeffs, dim)
+    # frame = adjust_brightness(frame, 0.5)
 
     h, w, c = frame.shape
     crop_size = 0.8
